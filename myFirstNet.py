@@ -8,7 +8,7 @@ def init_params(layer_size, key):
     params = []
     for n_in, n_out in zip(layer_size[:-1], layer_size[1:]):
         key, w_key = random.split(key)
-        w = random.normal(w_key, (n_in, n_out)) * jnp.sqrt(2.0 / n_in)
+        w = random.normal(w_key, (n_in, n_out)) * jnp.sqrt(2.0 / n_in) #He initialisation scaling to keep variance roughly independent of input size
         b = jnp.zeros(n_out)
         params.append((w, b))
     return params
@@ -35,7 +35,7 @@ def optimise():
     ])
     target_1d = jnp.logical_xor(x[:,0], x[:,1]).astype(float)
     target = target_1d.reshape(-1, 1)
-    s = jax.tree.map(jnp.zeros_like, params) #memory of squared gradients
+    s = jax.tree.map(jnp.zeros_like, params) #moving average of squared gradients
     velocity = jax.tree.map(jnp.zeros_like, params)
     
     lr = 0.01
