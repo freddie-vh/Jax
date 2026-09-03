@@ -4,12 +4,14 @@ from jax import random
 from jax import value_and_grad
 import jax
 
-@jax.jit(static_argnames="steps")
-def simulate(theta0, omega0, g, L, dt, steps):
-    def forward_step(carry, x):
+@jax.jit(static_argnames=("steps", "unknown"))
+def simulate(theta0, omega0, g, L, dt, steps, unknown):
+    def forward_step(carry, _):
         theta, omega = carry
         angular_acceleration = -(g/L) * jnp.sin(theta)
-        new_omega = omega + dt * angular_acceleration - 0.1 * omega
+        new_omega = omega + dt * angular_acceleration
+        if unknown == True:
+            new_omega -= 0.1 * omega
         new_theta = theta + dt * new_omega
         new_state = jnp.array([new_theta, new_omega])
         return new_state, new_state
@@ -18,11 +20,26 @@ def simulate(theta0, omega0, g, L, dt, steps):
     trajectories = jnp.concatenate([initial[None, :], result], axis=0)
     return trajectories
 
-trajectory_data = simulate(0.5, 0.0, 9.81, 1.0, 0.01, 10)
+@jax.jit(static_argnames="steps")
+def simulate_with_nn(theta0, omega0, g, L, dt, steps, params):
+    def forward_step(carry, _):
+        theta, omega = carry
+        angular_acceleration = -(g/L) * jnp.sin(theta)
+        new_omega = omega + dt * angular_acceleration
+        new_theta = theta + dt * new_omega
+        new_state = jnp.array([new_theta, new_omega])
+        difference = forward(params, new_state)
+        theta_difference, omega_difference = difference
+        new_state = jnp.array([new_theta + theta_difference, new_omega + omega_difference])
+        return new_state, new_state
+    final, result = lax.scan(forward_step, init=jnp.array([theta0, omega0]), xs=None, length=steps)
+    initial = jnp.array([theta0, omega0])
+    trajectories = jnp.concatenate([initial[None, :], result], axis=0)
+    return trajectories
 
 def init_params(layer_size, key):
     params = []
-    for n_in, n_out in zip(layer_size[1:], layer_size[:-1]):
+    for n_in, n_out in zip(layer_size[:-1], layer_size[1:]):
         key, w_key = random.split(key)
         w = random.normal(w_key, (n_in, n_out)) * jnp.sqrt(2.0 / n_in)
         b = jnp.zeros(n_out)
@@ -40,11 +57,7 @@ def loss(params, x, target):
     y = forward(params, x)
     return jnp.mean((y - target)**2)
 
-def optimiser():
-    key = random.PRNGKey(10)
-    params = init_params((2,2,1))
-    x = jnp.array([]) #replace with actual input data
-    target = jnp.array([]) #replace with actual target data
+def optimise(x, target, params):
     s = jax.tree.map(jnp.zeros_like, params)
     velocity = s
     lr = 0.01
@@ -59,3 +72,16 @@ def optimiser():
         if epoch % 100 == 0:
             print(loss_value)
     return params
+
+def main():
+    sim_data = simulate(0.5, 0.0, 9.81, 1.0, 0.01, 100, False) #generate simulation data without unknown component
+    true_data = simulate(0.5, 0.0, 9.81, 1.0, 0.01, 100, True) #generate training data
+    difference = true_data - sim_data
+    key = random.PRNGKey(2)
+    params = init_params((2,8,2), key)
+    params = optimise(sim_data, difference, params)
+    result = simulate_with_nn(0.5, 0.0, 9.81, 1.0, 0.01, 100, params)
+    return result - true_data
+
+print(main())
+
