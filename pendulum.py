@@ -29,12 +29,13 @@ def simulate_with_nn(theta0, omega0, g, L, dt, steps, params):
         new_theta = theta + dt * new_omega
         new_state = jnp.array([new_theta, new_omega])
         difference = forward(params, new_state)
-        theta_difference, omega_difference = difference
-        new_state = jnp.array([new_theta + theta_difference, new_omega + omega_difference])
-        return new_state, new_state
+        new_state = jnp.array([new_theta, new_omega])
+        return new_state, (new_state, difference)
     final, result = lax.scan(forward_step, init=jnp.array([theta0, omega0]), xs=None, length=steps)
+    normal, difference = result
+    trajectories = normal + difference
     initial = jnp.array([theta0, omega0])
-    trajectories = jnp.concatenate([initial[None, :], result], axis=0)
+    trajectories = jnp.concatenate([initial[None, :], trajectories], axis=0)
     return trajectories
 
 def init_params(layer_size, key):
@@ -78,7 +79,7 @@ def main():
     true_data = simulate(0.5, 0.0, 9.81, 1.0, 0.01, 100, True) #generate training data
     difference = true_data - sim_data
     key = random.PRNGKey(2)
-    params = init_params((2,8,2), key)
+    params = init_params((2,16,2), key)
     params = optimise(sim_data, difference, params)
     result = simulate_with_nn(0.5, 0.0, 9.81, 1.0, 0.01, 100, params)
     return result - true_data
