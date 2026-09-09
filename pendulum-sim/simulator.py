@@ -1,7 +1,6 @@
 import jax.numpy as jnp
 import jax.lax as lax
 from jax import random
-from jax import value_and_grad
 import jax
 
 import network
@@ -13,7 +12,7 @@ def simulate(theta0, omega0, g, L, dt, steps, unknown):
         angular_acceleration = -(g/L) * jnp.sin(theta)
         new_omega = omega + dt * angular_acceleration
         if unknown == True:
-            new_omega -= 0.1 * omega
+            new_omega -= 0.01 * omega
         new_theta = theta + dt * new_omega
         new_state = jnp.array([new_theta, new_omega])
         return new_state, new_state
