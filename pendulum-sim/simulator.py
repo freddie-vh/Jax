@@ -30,7 +30,6 @@ def simulate_with_nn(theta0, omega0, g, L, dt, steps, params):
         new_theta = theta + dt * new_omega
         new_state = jnp.array([new_theta, new_omega])
         difference = network.forward(params, new_state)
-        new_state = jnp.array([new_theta, new_omega])
         return new_state, (new_state, difference)
     final, result = lax.scan(forward_step, init=jnp.array([theta0, omega0]), xs=None, length=steps)
     normal, difference = result
