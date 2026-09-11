@@ -24,6 +24,7 @@ def loss(params, x, target):
     y = forward(params, x)
     return jnp.mean((y - target)**2)
 
+@jax.jit
 def optimise(x, target, params):
     s = jax.tree.map(jnp.zeros_like, params)
     velocity = s
