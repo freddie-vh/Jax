@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 def main():   
     sim_data = simulator.simulate(-0.45, 0.1, 9.81, 1.0, 0.01, 100, False) #generate simulation data without unknown component
-    true_data = simulator.simulate(-0.45, 0.1, 9.81, 1.0, 0.01, 100, True) #generate training data
+    true_data = simulator.simulate(-0.45, 0.1, 9.81, 1.0, 0.01, 100, True) #generate target data
     sim_params = [[-0.5, 0.0, 9.81, 1.0, 0.01, 100], [-0.4, 0.1, 9.81, 1.0, 0.01, 100], [-0.5, 0.2, 9.81, 1.0, 0.01, 100], [-0.3, 0.5, 9.81, 1.0, 0.01, 100], [-0.4, 0.2, 9.81, 1.0, 0.01, 100]]
     network_params = (2, 16, 2)
     params = training.train(sim_params=sim_params, network_params=network_params)
