@@ -31,11 +31,13 @@ def optimise(x, target, params):
     beta1 = 0.9
     beta2 = 0.999
     loss_and_grad = value_and_grad(loss)
-    for epoch in range(500):
+    def training_step(carry, _):
+        params, s, velocity = carry
         loss_value, grads = loss_and_grad(params, x, target)
         s = jax.tree.map(lambda s_i, g: beta2 * s_i + (1-beta2) * g**2, s, grads)
         velocity = jax.tree.map(lambda v_i, g: beta1 * v_i + (1-beta1) * g, velocity, grads)
         params = jax.tree.map(lambda p, v, s_i: p - lr * v / (jnp.sqrt(s_i) + 1e-8), params, velocity, s)
-        if epoch % 100 == 0:
-            print(loss_value)
+        return (params, s, velocity), loss_value
+    init_carry = (params, s, velocity)
+    (params, s, velocity), losses =  lax.scan(training_step, init_carry, xs=None, length=500)
     return params
