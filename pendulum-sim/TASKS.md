@@ -8,7 +8,7 @@
     - Check total energy is approximately constant []
     - Check simulator gives the same result for symmetrical starting angles []
   - Network tests:
-    - RMSE of results when tested on conditions not in the training dataset []
+    - RMSE of results when tested on conditions not in the training dataset [x]
     - Graph results with neural net vs without vs true data [x]
     - Test simulation performance when given different amounts of training data []
     - Plot loss curve during training []

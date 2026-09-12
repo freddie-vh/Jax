@@ -1,9 +1,9 @@
+import network
+
 import jax.numpy as jnp
 import jax.lax as lax
 from jax import random
 import jax
-
-import network
 
 @jax.jit(static_argnames=("steps", "unknown"))
 def simulate(theta0, omega0, g, L, dt, steps, unknown):

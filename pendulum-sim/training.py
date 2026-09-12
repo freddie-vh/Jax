@@ -3,10 +3,10 @@ import network
 
 from jax import random
 
-def train(sim_params, network_params):
+def train(training_params, network_params):
     key = random.PRNGKey(2)
     params = network.init_params(network_params, key)
-    for training_cond in sim_params:
+    for training_cond in training_params:
         sim_data = simulator.simulate(*training_cond, False)
         true_data = simulator.simulate(*training_cond, True)
         difference = true_data - sim_data
